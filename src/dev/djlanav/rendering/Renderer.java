@@ -19,6 +19,8 @@ public class Renderer {
 	
 	private Logger logger = LogManager.getLogger();
 	
+	private static final int MAX_IN_FLIGHT_FRAMES = 2;
+	
 	private VkAttachmentDescription.Buffer colorAttachments = VkAttachmentDescription.calloc(1);
 	private VkAttachmentReference.Buffer referenceAttachments = VkAttachmentReference.calloc(1);
 	private VkSubpassDescription.Buffer subpassBuffer = VkSubpassDescription.calloc(1);
@@ -27,9 +29,15 @@ public class Renderer {
 	private LongBuffer renderPass = BufferUtils.createLongBuffer(1);
 	private ArrayList<LongBuffer> frameBuffers = new ArrayList<LongBuffer>();
 	
+	private VkCommandBuffer commandBuffer;
 	private LongBuffer commandPool = BufferUtils.createLongBuffer(1);
 	private PointerBuffer commandBuffers = BufferUtils.createPointerBuffer(1);
-	private VkCommandBuffer commandBuffer;
+	
+	// Frames in flight sempahores/fences
+	private LongBuffer imageAvailableSemaphores = BufferUtils.createLongBuffer(MAX_IN_FLIGHT_FRAMES);
+	private LongBuffer renderingFinishedSemaphores = BufferUtils.createLongBuffer(MAX_IN_FLIGHT_FRAMES);
+	private LongBuffer inFlightFences = BufferUtils.createLongBuffer(MAX_IN_FLIGHT_FRAMES);
+	
 	private LongBuffer imageAvailableSempahore = BufferUtils.createLongBuffer(1);
 	private LongBuffer renderingFinishedSemaphore = BufferUtils.createLongBuffer(1);
 	private LongBuffer inFlightFence = BufferUtils.createLongBuffer(1);
@@ -117,8 +125,6 @@ public class Renderer {
 			
 			for (VulkanQueue queue : queueFamilyManager.getQueues()) {
 				if (queue.getQueueCapabilities().contains(QueueType.GRAPHICS)) {
-					
-					// TODO: If validation layers are enabled this causes a memory access violation in the dll
 					if (VK10.vkQueueSubmit(queue.getQueue(), submitInfo, inFlightFence.get(0)) != VK10.VK_SUCCESS) {
 						logger.error("Failed to submit draw command buffer");
 					}

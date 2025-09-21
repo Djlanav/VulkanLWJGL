@@ -60,6 +60,8 @@ public class WindowManager {
 			GLFW.glfwSetWindowIcon(window, windowIconImageBuffer);
 		}
 		
+		GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+		GLFW.glfwSetWindowPos(window, (vidMode.width() - width) / 2, (vidMode.height() - height) / 2);
 		GLFW.glfwMakeContextCurrent(window);
 	}
 	
